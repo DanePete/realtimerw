@@ -70,24 +70,21 @@ const typingUsers = new Map(); // roomId => Set of userIds
 // ============================================
 
 /**
- * Verify JWT token from Drupal
+ * Verify token from Drupal (base64 encoded JSON for now)
  */
 async function verifyToken(token) {
   try {
-    const decoded = jwt.verify(token, config.jwt.secret);
+    // Decode base64 token (Drupal sends base64-encoded JSON)
+    const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
     
-    // Optional: Verify with Drupal API
-    if (config.server.env === 'production') {
-      const response = await axios.get(`${config.drupal.url}/api/realtime/verify`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-API-Key': config.drupal.apiKey,
-        },
-      });
-      
-      if (!response.data.valid) {
-        throw new Error('Token invalid');
-      }
+    // Verify expiration
+    if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+      throw new Error('Token expired');
+    }
+    
+    // Verify it has required fields
+    if (!decoded.uid || !decoded.name) {
+      throw new Error('Invalid token structure');
     }
     
     return decoded;
