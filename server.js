@@ -304,8 +304,10 @@ io.on('connection', (socket) => {
  * Mark user as online
  */
 async function markUserOnline(userId, socketId) {
-  await redisClient.setEx(`presence:${userId}`, config.presence.offlineTimeout / 1000, 'online');
-  await redisClient.sAdd(`online:users`, userId.toString());
+  if (redisEnabled && redisClient) {
+    await redisClient.setEx(`presence:${userId}`, config.presence.offlineTimeout / 1000, 'online');
+    await redisClient.sAdd(`online:users`, userId.toString());
+  }
   
   // Broadcast to followers
   const followers = await getFollowers(userId);
@@ -321,8 +323,10 @@ async function markUserOnline(userId, socketId) {
  * Mark user as offline
  */
 async function markUserOffline(userId) {
-  await redisClient.del(`presence:${userId}`);
-  await redisClient.sRem(`online:users`, userId.toString());
+  if (redisEnabled && redisClient) {
+    await redisClient.del(`presence:${userId}`);
+    await redisClient.sRem(`online:users`, userId.toString());
+  }
   
   // Broadcast to followers
   const followers = await getFollowers(userId);
@@ -338,7 +342,9 @@ async function markUserOffline(userId) {
  * Update presence status
  */
 async function updatePresence(userId, status) {
-  await redisClient.setEx(`presence:${userId}:status`, 3600, status);
+  if (redisEnabled && redisClient) {
+    await redisClient.setEx(`presence:${userId}:status`, 3600, status);
+  }
   
   // Broadcast status change
   const followers = await getFollowers(userId);
@@ -355,7 +361,9 @@ async function updatePresence(userId, status) {
  * Update heartbeat
  */
 async function updateHeartbeat(userId) {
-  await redisClient.setEx(`presence:${userId}`, config.presence.offlineTimeout / 1000, 'online');
+  if (redisEnabled && redisClient) {
+    await redisClient.setEx(`presence:${userId}`, config.presence.offlineTimeout / 1000, 'online');
+  }
 }
 
 /**
@@ -548,9 +556,11 @@ httpServer.listen(PORT, () => {
 
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, closing server...');
-  await redisClient.quit();
-  await redisPub.quit();
-  await redisSub.quit();
+  if (redisEnabled && redisClient) {
+    await redisClient.quit();
+    await redisPub.quit();
+    await redisSub.quit();
+  }
   httpServer.close(() => {
     console.log('Server closed');
     process.exit(0);
