@@ -1,0 +1,56 @@
+RAILWAY DEPLOYMENT - STEP BY STEP
+====================================
+
+BEFORE YOU START:
+1. Create Railway account at https://railway.app
+2. Choose GitHub sign-in for easiest deployment
+
+OPTION 1: WEB UI (EASIEST)
+---------------------------
+1. Push code to GitHub:
+   cd /Users/dpetersen/Projects/bounded/bounded
+   git add websocket-server/
+   git commit -m "Add WebSocket server"
+   git push origin main
+
+2. Go to https://railway.app/new
+3. Click "Deploy from GitHub repo"
+4. Select your repo
+5. Set Root Directory: websocket-server
+6. Click Deploy!
+
+OPTION 2: CLI
+-------------
+1. Install Railway CLI:
+   npm install -g @railway/cli
+
+2. Login:
+   railway login
+
+3. Navigate to folder:
+   cd /Users/dpetersen/Projects/bounded/bounded/websocket-server
+
+4. Initialize:
+   railway init
+
+5. Deploy:
+   railway up
+
+AFTER DEPLOYMENT:
+-----------------
+1. Get your URL from Railway dashboard
+2. Set environment variables (see RAILWAY_SETUP.md)
+3. Test: https://your-app.up.railway.app/health
+4. Configure Drupal to use this URL
+
+COPY THESE TO RAILWAY VARIABLES:
+---------------------------------
+Generate keys first:
+  openssl rand -base64 32  # For API_KEY
+  openssl rand -base64 64  # For JWT_SECRET
+
+Then set in Railway:
+  API_KEY=<paste-generated-key>
+  JWT_SECRET=<paste-generated-key>
+  NODE_ENV=production
+
