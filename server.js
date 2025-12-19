@@ -26,22 +26,38 @@ const io = new Server(httpServer, {
   pingInterval: 25000,
 });
 
-// Initialize Redis clients
-const redisClient = redis.createClient({
-  host: config.redis.host,
-  port: config.redis.port,
-  password: config.redis.password,
-});
+// Initialize Redis clients (optional - for scaling)
+let redisClient = null;
+let redisPub = null;
+let redisSub = null;
+let redisEnabled = false;
 
-const redisPub = redisClient.duplicate();
-const redisSub = redisClient.duplicate();
-
-// Connect to Redis
+// Try to connect to Redis (optional)
 (async () => {
-  await redisClient.connect();
-  await redisPub.connect();
-  await redisSub.connect();
-  console.log('✅ Redis connected');
+  try {
+    if (config.redis.host && config.redis.host !== 'localhost') {
+      redisClient = redis.createClient({
+        host: config.redis.host,
+        port: config.redis.port,
+        password: config.redis.password,
+      });
+      
+      redisPub = redisClient.duplicate();
+      redisSub = redisClient.duplicate();
+      
+      await redisClient.connect();
+      await redisPub.connect();
+      await redisSub.connect();
+      
+      redisEnabled = true;
+      console.log('✅ Redis connected');
+    } else {
+      console.log('ℹ️  Redis disabled (not needed for single instance)');
+    }
+  } catch (error) {
+    console.log('ℹ️  Redis unavailable, running without it (fine for small deployments)');
+    redisEnabled = false;
+  }
 })();
 
 // In-memory stores (backed by Redis)
