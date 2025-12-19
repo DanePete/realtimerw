@@ -9,11 +9,20 @@ const { Server } = require('socket.io');
 const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const cors = require('cors');
 const config = require('./config');
 
 // Initialize Express
 const app = express();
 const httpServer = createServer(app);
+
+// Add CORS middleware to Express
+app.use(cors({
+  origin: config.cors.origins,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+}));
 
 // Initialize Socket.io
 const io = new Server(httpServer, {
